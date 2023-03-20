@@ -2,30 +2,34 @@ include application
 script(src='/js/index.js?q='~randomString())
 script(src="https://cdn.plot.ly/plotly-2.18.2.min.js")
 .container-fluid
-    .row 
+    .row.align-items-end.border.bg-light.py-2
         .col-2
-            .row
+            .row.px-1
                 label(for="select_folder")="Датасет" 
                 select.form-select#select_folder
         .col-2 
-            .row 
+            .row.px-1
                 label(for="metric")="Метрика"
                 select.form-select#metric
         .col-2
-            .row 
+            .row.px-1
                 label(for="n_neighbors")="Размер локальной окрестности"
                 input.form-control#n_neighbors(value="10" tooltip="Размер локальной окрестности (с точки зрения количества соседних точек выборки), используемой для аппроксимации многообразия. Большие значения приводят к более глобальному представлению коллектора, а меньшие значения приводят к сохранению большего количества локальных данных. Обычно значения должны быть в диапазоне от 2 до 100.")
         .col-2
-            .row 
+            .row.px-1
                 label(for="n_components")="Размер пространства для встраивания"
                 input.form-control#n_components(value="2" tooltip="Размер пространства для встраивания. По умолчанию это значение равно 2, чтобы упростить визуализацию, но разумно установить любое целочисленное значение в диапазоне от 2 до 100.")
-        .col-2
-            .row 
-                button.btn.btn-primary#calculate_umap(style="display: block")="Calculate UMAP"
-                button.btn.btn-primary#show_umap(style="display: none")="Show UMAP"
+        .col-4.d-flex.justify-content-end
+            button.btn.btn-primary.mx-1#calculate_umap(style="display: block")="Calculate UMAP"
+            //button.btn.btn-primary#show_umap(style="display: none")="Show UMAP"
+            button.btn.btn-success.mx-1#create_dataset="Create Dataset"
+            
+            
     .row
-        .col-6#images_box(style="height: 100vh; overflow-y: auto")
-        
+        .col-6
+            .row 
+                #type_checkboxs
+            .row#images_box(style="height: 100vh; overflow-y: auto")
         .col-6#umap_box
 .div_alerts(style="position: fixed; left:50px; top: 70px")
     .alert.alert-success#success_message(style="display: none")
@@ -39,4 +43,33 @@ script(src="https://cdn.plot.ly/plotly-2.18.2.min.js")
                     span(aria-hidden="true")&times;
             .modal-body.d-flex.justify-content-center
                 img.h-100#img_show
-    
+
+.modal.fade(id="modal_create_dataset", tabindex="-1", role="dialog", aria-hidden="true")
+    .modal-dialog.modal-xl
+        .modal-content
+            .modal-header
+                h5.setting-icn.modal-title#img_name='Output Dataset'
+            .modal-body
+                .alert.alert-success#success_create_dataset(style="display: none")
+                .alert.alert-danger#error_create_dataset(style="display: none")
+                .card.p-2#form_parameters(data_read_form="select_dataset")
+                    .row.align-items-end#new_dataset_form(style="display: none") 
+                        .col-10
+                            label(for="name_dataset")='Dataset Name'
+                            input.form-control#name_dataset(type="text" placeholder="Dataset name") 
+                        .col-2.d-flex.justify-content-end
+                            button.btn.btn-primary#choise_dataset="Choise Dataset"
+                    .row.align-items-end#choise_dataset_form
+                        .col-10
+                            label(for="select_dataset")='Dataset Name'
+                            select.form-select#select_dataset
+                        .col-2.d-flex.justify-content-end
+                            button.btn.btn-primary#new_dataset="New Dataset"
+                    .row.align-items-end 
+                        .col-12
+                            label(for="type_img_dataset")="Label Type Image"
+                            select.form-select#type_img_dataset(type="text")    
+                    .row.pt-2
+                        .col-12.d-flex.justify-content-end
+                            .row.px-3
+                                button.btn.btn-success#create_new_dataset="Create"           

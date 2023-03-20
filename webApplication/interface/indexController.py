@@ -1,7 +1,7 @@
 from webApplication import *
 from webApplication import app
 from flask import jsonify, json, send_from_directory, request
-import glob, os
+import glob, os, shutil
 from webApplication.UMAP.UMAP import UMAPModel
 umap = UMAPModel()
 
@@ -45,7 +45,14 @@ def get_metrics():
 def get_pic(folder, type, name):
     return send_from_directory("." + os.path.join(config['APP']['images_umap'], f"{folder}/{type}"), name)
 
-
+@app.route('/get_parameters_create_dataset', methods=['GET'])
+def get_parameters_create_dataset():
+    os.makedirs(config['APP']['folder_new_dataset'], exist_ok=True)
+    folders = os.listdir(config['APP']['folder_new_dataset'])
+    return jsonify({
+        'status': 'success',
+        'folders': folders
+    })
 
 @app.route('/calculate_umap', methods=['GET'])
 def calculate_umap():
@@ -105,3 +112,26 @@ def calculate_umap():
                 'status': "error",
                 'message': "Ошибка загрузки данных UMAP (/umapJson)"
             })
+
+@app.route('/create_dataset', methods=["POST"])
+def create_dataset():
+    try:
+        data = json.loads(request.data)
+        images = data['images']
+        for img in images:
+            if data['type_images'] == img['label_type']:
+                path = f"{config['APP']['images_umap']}/{data['folder']}/{img['label_type']}/{img['filename']}" 
+                new_path = f"{config['APP']['folder_new_dataset']}/{data['name_dataset']}/{img['label_type']}/{img['filename']}"
+                os.makedirs(f"{config['APP']['folder_new_dataset']}", exist_ok=True)
+                os.makedirs(f"{config['APP']['folder_new_dataset']}/{data['name_dataset']}/{img['label_type']}", exist_ok=True)
+                shutil.copyfile(path, new_path)
+        return jsonify({
+            'status': 'success',
+            'message': f'Создан датасет "{data["name_dataset"]}" с разделом "{data["type_images"]}"'
+
+        })
+    except:
+        return jsonify({
+            'status': 'error',
+            'message': 'Ошибка при создании датасета'
+        })

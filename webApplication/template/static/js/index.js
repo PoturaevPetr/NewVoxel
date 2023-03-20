@@ -55,24 +55,64 @@ $(document).ready(function() {
             success: (data) => {
                 var pictures = data['pictures']
                 $('#images_box').empty()
+                $('#type_checkboxs').empty()
+                var label = []
                 for (var i = 0; i < pictures.length; i++) {
-                    
+                    if (label.indexOf(pictures[i]['type']) == '-1') {
+                        label.push(pictures[i]['type'])
+                    }
+                    var div_img = document.createElement('div')
+                    div_img.setAttribute('class', 'card col-3 p-0')
+
                     var img = document.createElement('img')
                     img.setAttribute('src',  '/img_umap/' + data['folder'] + '/' + pictures[i]['type'] + '/' + pictures[i]['name'] + "?" + make_rnd(8))
-                    img.setAttribute('class', 'w-25 p-1')
+                    img.setAttribute('class', 'w-100')
                     img.setAttribute('id', 'img_umap')
                     img.setAttribute('pic_name', pictures[i]['name'])
+                    img.setAttribute('label_type', pictures[i]['type'])
                     img.setAttribute('tooltip', pictures[i]['name'])
-                    $('#images_box').append(img)
+
+                    var labelname = document.createElement('h5')
+                    labelname.innerHTML = pictures[i]['type']
+                    labelname.setAttribute('class', 'bg-primary rounded text-white text-center w-50')
+                    labelname.setAttribute('style', 'position: relative; top: 80%; left: 3%')
+
+                    var filename = document.createElement('label')
+                    filename.setAttribute('class', 'text-secondary text-center')
+                    filename.innerHTML = pictures[i]['name']
+                    div_img.appendChild(labelname)
+                    div_img.appendChild(img)
+                    div_img.appendChild(filename)
+                    
+                    $('#images_box').append(div_img)
                 }
                 if (data['status'] == "success") {
                     $('#success_message').text(data['message'])
                     $('#success_message').slideDown(500)
                     $('#success_message').delay(3000).slideUp()
                 }
+
+                for (var i = 0; i < label.length; i++) {
+                    var div_check_type = document.createElement('div')
+                    div_check_type.setAttribute('class', 'form-check form-check-inline')
+                    var check_type = document.createElement('input')
+                    check_type.setAttribute('type', 'checkbox')
+                    check_type.setAttribute('class', 'form-check-input check_label_image')
+                    check_type.setAttribute('id', 'check_type_'+ i)
+                    check_type.setAttribute('value', label[i])
+                    $(check_type).prop('checked', true)
+                    var label_type = document.createElement('label')
+                    label_type.setAttribute('class', 'form-check-label')
+                    label_type.setAttribute('for', 'check_type_' + i)
+                    label_type.innerHTML = label[i]
+                    div_check_type.append(check_type)
+                    div_check_type.append(label_type)
+                    $('#type_checkboxs').append(div_check_type)
+                }
             }
         })  
     }
+
     function load_umap(folder, metric, n_components, n_neighbors) {
         if (folder == undefined) {
             folder = $('#select_folder').find(':selected').attr('value')
@@ -105,10 +145,14 @@ $(document).ready(function() {
                     for (var i = 0; i < data_umap.length; i++) {
                         data_plot[data_umap[i]['label']]['data_xs'] = []
                         data_plot[data_umap[i]['label']]['data_ys'] = []
+                        data_plot[data_umap[i]['label']]['type'] = []
+                        data_plot[data_umap[i]['label']]['name'] = []
                     }
                     for (var i = 0; i < data_umap.length; i++) {
                         data_plot[data_umap[i]['label']]['data_xs'].push(data_umap[i]['x'])
                         data_plot[data_umap[i]['label']]['data_ys'].push(data_umap[i]['y'])
+                        data_plot[data_umap[i]['label']]['type'].push(data_umap[i]['label'])
+                        data_plot[data_umap[i]['label']]['name'].push(data_umap[i]['file_name'])
                     }
                     plot_umap(data_plot)
                 } else {
@@ -130,7 +174,9 @@ $(document).ready(function() {
                 y: data_plot[key_type[i]]['data_ys'],
                 mode: 'markers',
                 type: 'scatter',
+                filename: data_plot[key_type[i]]['name'],
                 name: key_type[i],
+                label: key_type[i],
                 marker: { size: 12 }
             }
             data.push(trace)
@@ -162,5 +208,178 @@ $(document).ready(function() {
         n_neighbors = $('#n_neighbors').val()
         load_umap(folder, metric, n_components, n_neighbors)
     })
+
+    $('#umap_box').on('plotly_selected', function(e) {
+        var data = e.target.data
+        var data_selected = []
+        for (type_number in data) {
+            var type_data = data[type_number]
+            var points_selected = type_data['selectedpoints']
+            for (var i = 0; i < points_selected.length; i++) {
+                data_selected.push({
+                    filename: type_data['filename'][points_selected[i]],
+                    label: type_data['label']
+                })
+            }
+        }
+        $('#images_box').empty()
+        var folder = $('#select_folder').find(':selected').attr('value')
+        for (var i = 0; i < data_selected.length; i++) {
+            var div_img = document.createElement('div')
+            div_img.setAttribute('class', 'card col-3 p-0')
+
+            var img = document.createElement('img')
+            img.setAttribute('src',  '/img_umap/' + folder + '/' + data_selected[i]['label'] + '/' + data_selected[i]['filename'] + "?" + make_rnd(8))
+            img.setAttribute('class', 'w-100')
+            img.setAttribute('id', 'img_umap')
+            img.setAttribute('pic_name', data_selected[i]['filename'])
+            img.setAttribute('label_type', data_selected[i]['label'])
+            img.setAttribute('tooltip', data_selected[i]['filename'])
+
+            var labelname = document.createElement('h5')
+            labelname.innerHTML = data_selected[i]['label']
+            labelname.setAttribute('class', 'bg-primary rounded text-white text-center w-50')
+            labelname.setAttribute('style', 'position: relative; top: 80%; left: 3%')
+            var filename = document.createElement('label')
+            filename.setAttribute('class', 'text-secondary text-center')
+            filename.innerHTML = data_selected[i]['filename']
+            div_img.appendChild(labelname)
+            div_img.appendChild(img)
+            div_img.appendChild(filename)
+                        
+            $('#images_box').append(div_img)
+        }
+    })
     
+    $(document).on('change', '.check_label_image', function(e) {
+        var types = []
+        var checks_types = document.querySelectorAll('.check_label_image')
+        for (var i = 0; i < checks_types.length; i++) {
+            if ($(checks_types[i]).prop('checked')) {
+                types.push($(checks_types[i]).attr('value'))
+            }
+        }
+        var folder = $('#select_folder').find(':selected').attr('value')
+        $.ajax({
+            type: "GET",
+            url: '/get_images_file/' + folder,
+            contentType: false,
+            proccesData: false,
+            success: (data) => {
+                var pictures = data['pictures']
+                $('#images_box').empty()
+                for (var i = 0; i < pictures.length; i++) {
+                    if (types.indexOf(pictures[i]['type']) != '-1') {
+                        var div_img = document.createElement('div')
+                        div_img.setAttribute('class', 'card col-3 p-0')
+
+                        var img = document.createElement('img')
+                        img.setAttribute('src',  '/img_umap/' + data['folder'] + '/' + pictures[i]['type'] + '/' + pictures[i]['name'] + "?" + make_rnd(8))
+                        img.setAttribute('class', 'w-100')
+                        img.setAttribute('id', 'img_umap')
+                        img.setAttribute('pic_name', pictures[i]['name'])
+                        img.setAttribute('label_type', pictures[i]['type'])
+                        img.setAttribute('tooltip', pictures[i]['name'])
+
+                        var labelname = document.createElement('h5')
+                        labelname.innerHTML = pictures[i]['type']
+                        labelname.setAttribute('class', 'bg-primary rounded text-white text-center w-50')
+                        labelname.setAttribute('style', 'position: relative; top: 80%; left: 3%')
+
+                        var filename = document.createElement('label')
+                        filename.setAttribute('class', 'text-secondary text-center')
+                        filename.innerHTML = pictures[i]['name']
+                        div_img.appendChild(labelname)
+                        div_img.appendChild(img)
+                        div_img.appendChild(filename)
+                        
+                        $('#images_box').append(div_img)
+                    }
+                    
+                }
+            }
+        })
+    })
+    $('#create_dataset').on('click', function() {
+        $('#modal_create_dataset').modal('toggle')
+        $.ajax({
+            type: "GET",
+            url: "/get_parameters_create_dataset",
+            contentType: false,
+            proccesData: false,
+            success: (data) => {
+                console.log(data)
+                $('#select_dataset').empty()
+                $('#type_img_dataset').empty()
+                for (var i = 0; i < data['folders'].length; i++) {
+                    var option = document.createElement('option')
+                    option.setAttribute('value', data['folders'][i])
+                    option.innerHTML = data['folders'][i]
+                    $('#select_dataset').append(option)
+                }
+                var checks_types = document.querySelectorAll('.check_label_image')
+                for (var i = 0; i < checks_types.length; i++) {
+                    var option = document.createElement('option')
+                    option.setAttribute('value', $(checks_types[i]).attr('value'))
+                    option.innerHTML = $(checks_types[i]).attr('value')
+                    $('#type_img_dataset').append(option)
+                }
+                
+            }
+        })
+    })
+
+    $('#new_dataset').on('click', function() {
+        $('#form_parameters').attr('data_read_form', 'name_dataset')
+        $('#new_dataset_form').show()
+        $('#choise_dataset_form').hide()
+    })
+    $('#choise_dataset').on('click', function() {
+        $('#form_parameters').attr('data_read_form', 'select_dataset')
+        $('#new_dataset_form').hide()
+        $('#choise_dataset_form').show()
+    })
+
+    $('#create_new_dataset').on('click', function() {
+        var imgs = document.querySelectorAll("#img_umap")
+        var folder = $('#select_folder').find(':selected').attr('value')
+        var type_images = $('#type_img_dataset').find(':selected').attr('value')
+        var name_dataset = ''
+        if ($('#form_parameters').attr('data_read_form') == 'select_dataset') {
+            name_dataset =  $('#select_dataset').find(':selected').attr('value')
+        } else {
+            name_dataset = $('#name_dataset').val()
+        }
+        var info = []
+        for (var i = 0; i < imgs.length; i++) {
+            info.push({
+                label_type: $(imgs[i]).attr('label_type'),
+                filename: $(imgs[i]).attr('pic_name')
+            })
+        }
+        data = {
+            images: info,
+            folder: folder,
+            type_images: type_images,
+            name_dataset: name_dataset
+        }
+        $.ajax({
+            type: "POST",
+            url: "/create_dataset",
+            contentType: false,
+            proccesData: false,
+            data: JSON.stringify(data),
+            success: (data) => {
+                if (data['status'] == "success") {
+                    $('#success_create_dataset').slideDown(500)
+                    $('#success_create_dataset').text(data['message'])
+                    $('#success_create_dataset').delay(3000).slideUp()
+                } else {
+                    $('#error_create_dataset').slideDown(500)
+                    $('#error_create_dataset').text(data['message'])
+                    $('#error_create_dataset').delay(3000).slideUp()
+                }
+            }
+        })
+    })
 })
