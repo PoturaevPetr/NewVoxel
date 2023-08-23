@@ -18,11 +18,28 @@ $(document).ready(function() {
             success: (data) => {
                 var folders = data['folders']
                 $('#select_folder').empty()
+                var option_folder = document.createElement('option')
+                option_folder.setAttribute('id', 'folder_' + -1)
+                option_folder.setAttribute('value', undefined)
+                option_folder.innerHTML = "Выбрать датасет"
+                $('#select_folder').append(option_folder)
                 for (var i = 0; i < folders.length; i++) {
                     var option_folder = document.createElement('option')
                     option_folder.setAttribute('id', 'folder_' + i)
                     option_folder.setAttribute('value', folders[i])
-                    option_folder.innerHTML = folders[i]
+
+                    var row = document.createElement('div')
+                    row.setAttribute('class', 'row')
+
+                    var text = document.createElement('h6')
+                    text.innerHTML = folders[i]
+                    var span = document.createElement('span')
+                    span.setAttribute('class', 'text-danger')
+                    span.setAttribute('style', 'color: red')
+                    span.innerHTML = data['pictures'][folders[i]]
+                    text.appendChild(span)
+                    row.appendChild(text)
+                    option_folder.appendChild(row)
                     $('#select_folder').append(option_folder)
                 }
             }
@@ -57,58 +74,58 @@ $(document).ready(function() {
                 $('#images_box').empty()
                 $('#type_checkboxs').empty()
                 var label = []
-                for (var i = 0; i < pictures.length; i++) {
-                    if (label.indexOf(pictures[i]['type']) == '-1') {
-                        label.push(pictures[i]['type'])
-                    }
-                    var div_img = document.createElement('div')
-                    div_img.setAttribute('class', 'card col-3 p-0')
-
-                    var img = document.createElement('img')
-                    img.setAttribute('src',  '/img_umap/' + data['folder'] + '/' + pictures[i]['type'] + '/' + pictures[i]['name'] + "?" + make_rnd(8))
-                    img.setAttribute('class', 'w-100')
-                    img.setAttribute('id', 'img_umap')
-                    img.setAttribute('pic_name', pictures[i]['name'])
-                    img.setAttribute('label_type', pictures[i]['type'])
-                    img.setAttribute('tooltip', pictures[i]['name'])
-
-                    var labelname = document.createElement('h5')
-                    labelname.innerHTML = pictures[i]['type']
-                    labelname.setAttribute('class', 'bg-primary rounded text-white text-center w-50')
-                    labelname.setAttribute('style', 'position: relative; top: 80%; left: 3%')
-
-                    var filename = document.createElement('label')
-                    filename.setAttribute('class', 'text-secondary text-center')
-                    filename.innerHTML = pictures[i]['name']
-                    div_img.appendChild(labelname)
-                    div_img.appendChild(img)
-                    div_img.appendChild(filename)
-                    
-                    $('#images_box').append(div_img)
-                }
                 if (data['status'] == "success") {
+                    for (var i = 0; i < pictures.length; i++) {
+                        if (label.indexOf(pictures[i]['type']) == '-1') {
+                            label.push(pictures[i]['type'])
+                        }
+                        var div_img = document.createElement('div')
+                        div_img.setAttribute('class', 'card col-3 p-0')
+
+                        var img = document.createElement('img')
+                        img.setAttribute('src',  '/img_umap/' + data['folder'] + '/' + pictures[i]['type'] + '/' + pictures[i]['name'] + "?" + make_rnd(8))
+                        img.setAttribute('class', 'w-100')
+                        img.setAttribute('id', 'img_umap')
+                        img.setAttribute('pic_name', pictures[i]['name'])
+                        img.setAttribute('label_type', pictures[i]['type'])
+                        img.setAttribute('tooltip', pictures[i]['name'])
+
+                        var labelname = document.createElement('h5')
+                        labelname.innerHTML = pictures[i]['type']
+                        labelname.setAttribute('class', 'bg-primary rounded text-white text-center w-50')
+                        labelname.setAttribute('style', 'position: relative; top: 80%; left: 3%')
+
+                        var filename = document.createElement('label')
+                        filename.setAttribute('class', 'text-secondary text-center')
+                        filename.innerHTML = pictures[i]['name']
+                        div_img.appendChild(labelname)
+                        div_img.appendChild(img)
+                        div_img.appendChild(filename)
+                        
+                        $('#images_box').append(div_img)
+                    }
+                    for (var i = 0; i < label.length; i++) {
+                        var div_check_type = document.createElement('div')
+                        div_check_type.setAttribute('class', 'form-check form-check-inline')
+                        var check_type = document.createElement('input')
+                        check_type.setAttribute('type', 'checkbox')
+                        check_type.setAttribute('class', 'form-check-input check_label_image')
+                        check_type.setAttribute('id', 'check_type_'+ i)
+                        check_type.setAttribute('value', label[i])
+                        $(check_type).prop('checked', true)
+                        var label_type = document.createElement('label')
+                        label_type.setAttribute('class', 'form-check-label')
+                        label_type.setAttribute('for', 'check_type_' + i)
+                        label_type.innerHTML = label[i]
+                        div_check_type.append(check_type)
+                        div_check_type.append(label_type)
+                        $('#type_checkboxs').append(div_check_type)
+                    }
+                    
                     $('#success_message').text(data['message'])
                     $('#success_message').slideDown(500)
                     $('#success_message').delay(3000).slideUp()
-                }
-
-                for (var i = 0; i < label.length; i++) {
-                    var div_check_type = document.createElement('div')
-                    div_check_type.setAttribute('class', 'form-check form-check-inline')
-                    var check_type = document.createElement('input')
-                    check_type.setAttribute('type', 'checkbox')
-                    check_type.setAttribute('class', 'form-check-input check_label_image')
-                    check_type.setAttribute('id', 'check_type_'+ i)
-                    check_type.setAttribute('value', label[i])
-                    $(check_type).prop('checked', true)
-                    var label_type = document.createElement('label')
-                    label_type.setAttribute('class', 'form-check-label')
-                    label_type.setAttribute('for', 'check_type_' + i)
-                    label_type.innerHTML = label[i]
-                    div_check_type.append(check_type)
-                    div_check_type.append(label_type)
-                    $('#type_checkboxs').append(div_check_type)
-                }
+                } 
             }
         })  
     }

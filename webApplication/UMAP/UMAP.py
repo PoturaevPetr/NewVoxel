@@ -16,21 +16,32 @@ def reformat_turple_list(im):
 
 
 class UMAPModel():
-    def init_dataset(self, path, colors):
+    colors_list = ['red', 'blue', 'green']
+    colors = {}
+    reverce_lables = {}
+    def init_dataset(self, path):
         data = [] 
+        types = []
         self.files = list()
-        for file in tqdm(glob(f'{path}/*/*')):
-            #try:
-            if file.split('\\')[-2] not in colors.keys():
-                continue
-            im = Image.open(file)
-            im = im.resize((128, 128), Image.Resampling.LANCZOS)
-            pixels = reformat_turple_list(list(im.getdata()))
-            color = colors[file.split('\\')[-2]]
-            data.append([color] + pixels)
-            self.files.append(os.path.basename(file))
-            #except:
-            #    print(f'Error {file}')
+        for file_ in tqdm(glob(f'{path}/**/*.jpg') + glob(f'{path}/**/*.png')):
+            try:
+                file = file_.replace('\\', '/')
+                if file.split('/')[-2] not in types:
+                    types.append(file.split('/')[-2])
+
+                for t, color in zip(types, self.colors_list[:len(types)]):
+                    self.colors[t] = color
+                    self.reverce_lables[color] = t
+
+
+                im = Image.open(file)
+                im = im.resize((128, 128), Image.Resampling.LANCZOS)
+                pixels = reformat_turple_list(list(im.getdata()))
+                color = self.colors[file.split('/')[-2]]
+                data.append([color] + pixels)
+                self.files.append(os.path.basename(file))
+            except:
+                print(f'Error {file}')
         self.df = pd.DataFrame(data)
         #print(df)
         self.df.columns = ['label'] + ['a{}'.format(i) for i in range(self.df.shape[1]-1)]
@@ -40,15 +51,14 @@ class UMAPModel():
         self.umap = UMAP(metric=metric, n_components=n_components, n_neighbors=n_neighbors)
         embedding_umap = self.umap.fit_transform(self.df.drop('label', axis = 1))
 
-    def generate_json(self, path_json, reverce_lables):
-        reverce_lables = {'red':'HSIL','green':'LSIL', 'blue': 'Norma'}
+    def generate_json(self, path_json):
         data = list()
         for i, coordinate in enumerate(self.umap.embedding_):
             data.append({
                 'x': float(coordinate[0]),
                 'y': float(coordinate[1]),
                 'file_name': self.files[i],
-                'label': reverce_lables[self.labels[i]]
+                'label': self.reverce_lables[self.labels[i]]
             })
 
         result = {'data': data}

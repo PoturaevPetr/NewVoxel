@@ -4,26 +4,36 @@ from flask import jsonify, json, send_from_directory, request
 import glob, os, shutil
 from webApplication.UMAP.UMAP import UMAPModel
 umap = UMAPModel()
+from config import config
 
 @app.route('/get_images_folder', methods=["GET"])
 def get_images_umap():
     folders = os.listdir("images")
+    pictures = {}
+    for folder in folders:
+        files_counts = len(glob.glob(f"images/{folder}/**/*.jpg", recursive=True) + glob.glob(f"images/{folder}/**/*.png", recursive=True)) 
+        pictures[folder] = files_counts
     return jsonify({
         "status": "success",
         "message": "Датасеты загружены",
-        "folders": folders
+        "folders": folders,
+        "pictures": pictures
     })
 @app.route('/get_images_file/<path:folder>', methods=['GET'])
 def get_images_file(folder):
     if folder == 'undefined':  
-        folder = os.listdir(f"{config['APP']['images_umap']}")[0]
-    pic_paths = glob.glob(pathname=f"{config['APP']['images_umap']}/{folder}/**", recursive=True)
+        return jsonify({
+        "status": "error",
+        "message": "Датасет не найден",
+    })
+    pic_paths = glob.glob(pathname=f"{config['APP']['images_umap']}/{folder}/**/*.jpg", recursive=True) +  glob.glob(pathname=f"{config['APP']['images_umap']}/{folder}/**/*.png", recursive=True)
+    print(pic_paths)
     pictures = [
-        {'name': i.split('\\')[-1], 'type': i.split('\\')[-2]} for i in pic_paths if '.jpg' in i 
+        {'name': i.split('/')[-1], 'type': i.split('/')[-2]} for i in pic_paths
     ]
     return jsonify({
         "status": "success",
-        "message": "Изображения загружены",
+        "message": "Датасет загружен",
         "pictures": pictures,
         'folder': folder
     })
@@ -35,7 +45,7 @@ def get_metrics():
            'mahalanobis', 'wminkowski', 'seuclidean',
            'cosine', 'correlation',
            'hamming', 'dice', 'russellrao', 'kulsinski', 'rogerstanimoto', 'sokalmichener', 'sokalsneath', 'yule' 
-          ]
+        ]
     return jsonify({
         'status': 'success',
         'metrics': metrics
@@ -56,9 +66,6 @@ def get_parameters_create_dataset():
 
 @app.route('/calculate_umap', methods=['GET'])
 def calculate_umap():
-    colors = {'HSIL':'red','LSIL':'green', 'NORMA': 'blue'}
-    reverce_lables = {'red':'HSIL','green':'LSIL', 'blue': 'Norma'}
-
     folder = request.args.get('folder')
     if folder == 'undefined':
         folder = os.listdir(f"{config['APP']['images_umap']}")[0]
@@ -97,11 +104,9 @@ def calculate_umap():
     else:
         path = f"{config['APP']['images_umap']}/{folder}"
         try:
-            umap.init_dataset(path, colors=colors)
+            umap.init_dataset(path)
             umap.init_umap(metric=metric, n_components=int(n_components), n_neighbors=int(n_neighbors))
-
-            reverce_lables = {'red':'HSIL','green':'LSIL', 'blue': 'Norma'}
-            result = umap.generate_json(path_json=path_json, reverce_lables=reverce_lables)
+            result = umap.generate_json(path_json=path_json)
             return jsonify({
                 "status": "success",
                 'data': result,
